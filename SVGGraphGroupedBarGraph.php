@@ -24,26 +24,19 @@ require_once 'SVGGraphBarGraph.php';
 
 class GroupedBarGraph extends BarGraph {
 
-  protected $multi_graph;
-
   protected function Draw()
   {
     $body = $this->Grid() . $this->Guidelines(SVGG_GUIDELINE_BELOW);
 
     $chunk_count = count($this->multi_graph);
-    $gap_count = $chunk_count - 1;
-    $bar_width = $this->BarWidth();
-    $chunk_gap = $gap_count > 0 ? $this->group_space : 0;
-    if($gap_count > 0 && $chunk_gap * $gap_count > $bar_width - $chunk_count)
-      $chunk_gap = ($bar_width - $chunk_count) / $gap_count;
-    $chunk_width = ($bar_width - ($chunk_gap * ($chunk_count - 1)))
-      / $chunk_count;
-    $chunk_unit_width = $chunk_width + $chunk_gap;
+    list($chunk_width, $bspace, $chunk_unit_width) =
+      GroupedBarGraph::BarPosition($this->bar_width, 
+      $this->x_axes[$this->main_x_axis]->Unit(), $chunk_count, $this->bar_space,
+      $this->group_space);
+
     $bar_style = array();
     $bar = array('width' => $chunk_width);
 
-    $b_start = $this->pad_left + ($this->bar_space / 2);
-    $bspace = $this->bar_space / 2;
     $bnum = 0;
     $ccount = count($this->colours);
     $bars_shown = array_fill(0, $chunk_count, 0);
@@ -110,43 +103,39 @@ class GroupedBarGraph extends BarGraph {
   }
 
   /**
-   * Returns the maximum value
+   * Calculates the bar width, gap to first bar, gap between bars
+   * returns an array containing all three
    */
-  protected function GetMaxValue()
+  static function BarPosition($bar_width, $unit_width, $group_size, $bar_space,
+    $group_space)
   {
-    return $this->multi_graph->GetMaxValue();
-  }
+    $gap_count = $group_size - 1;
+    $gap = $gap_count > 0 ? $group_space : 0;
+    if(is_numeric($bar_width) && $bar_width >= 1) {
+      // fixed bar width
+      if($group_size > 1 && ($bar_width + $gap) * $group_size > $unit_width) {
 
-  /**
-   * Returns the minimum value
-   */
-  protected function GetMinValue()
-  {
-    return $this->multi_graph->GetMinValue();
-  }
-
-  /**
-   * Returns the key from the MultiGraph
-   */
-  protected function GetKey($index)
-  {
-    return $this->multi_graph->GetKey($index);
-  }
-
-  /**
-   * Returns the maximum key from the MultiGraph
-   */
-  protected function GetMaxKey()
-  {
-    return $this->multi_graph->GetMaxKey();
-  }
-
-  /**
-   * Returns the minimum key from the MultiGraph
-   */
-  protected function GetMinKey()
-  {
-    return $this->multi_graph->GetMinKey();
+        // bars don't fit with group_space option, so they must overlap
+        // (and make sure the bars are at least 1 pixel apart)
+        $spacing = max(1, ($unit_width - $bar_width) / 
+          ($group_size - 1));
+        $offset = 0;
+      } else {
+        // space the bars group_space apart, centred in unit space
+        $spacing = $bar_width + $gap;
+        $offset = max(0, ($unit_width - ($spacing * $group_size)) / 2);
+      }
+    } else {
+      // bar width dependent on space
+      $bar_width = $bar_space >= $unit_width ? '1' : $unit_width - $bar_space;
+      if($gap_count > 0 && $gap * $gap_count > $bar_width - $group_size)
+        $gap = ($bar_width - $group_size) / $gap_count;
+      $bar_width = ($bar_width - ($gap * ($group_size - 1)))
+        / $group_size;
+      $spacing = $bar_width + $gap;
+      $offset = $bar_space / 2;
+    }
+    return array($bar_width, $offset, $spacing);
   }
 
 }

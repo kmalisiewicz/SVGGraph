@@ -24,7 +24,6 @@ require_once 'SVGGraphHorizontalBarGraph.php';
 
 class HorizontalStackedBarGraph extends HorizontalBarGraph {
 
-  protected $multi_graph;
   protected $legend_reverse = false;
   protected $single_axis = true;
 
@@ -36,11 +35,11 @@ class HorizontalStackedBarGraph extends HorizontalBarGraph {
     $body = $this->Grid() . $this->Guidelines(SVGG_GUIDELINE_BELOW);
 
     $bar_height = $this->BarHeight();
+    $bspace = max(0, ($this->y_axes[$this->main_y_axis]->Unit() - $bar_height) / 2);
     $bar_style = array();
     $bar = array('height' => $bar_height);
 
     $bnum = 0;
-    $bspace = $this->bar_space / 2;
     $b_start = $this->height - $this->pad_bottom - ($this->bar_space / 2);
     $ccount = count($this->colours);
     $chunk_count = count($this->multi_graph);
@@ -237,30 +236,5 @@ class HorizontalStackedBarGraph extends HorizontalBarGraph {
   {
     return $this->multi_graph->GetMinSumValue();
   }
-
-  /**
-   * Returns the key from the MultiGraph
-   */
-  protected function GetKey($index)
-  {
-    return $this->multi_graph->GetKey($index);
-  }
-
-  /**
-   * Returns the maximum key from the MultiGraph
-   */
-  protected function GetMaxKey()
-  {
-    return $this->multi_graph->GetMaxKey();
-  }
-
-  /**
-   * Returns the minimum key from the MultiGraph
-   */
-  protected function GetMinKey()
-  {
-    return $this->multi_graph->GetMinKey();
-  }
-
 }
 
